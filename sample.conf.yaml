@@ -1,0 +1,5 @@
+---
+mattermost_api:
+  url: http://chat.local/
+  username: professor
+  password: professor

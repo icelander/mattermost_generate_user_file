@@ -1,3 +1,3 @@
 source 'https://rubygems.org'
-gem 'down'
-gem 'colorize'
+gem 'httparty'
+gem 'pp'
