@@ -38,12 +38,12 @@ rescue Exception => e
 	pp e
 end
 
-def get_download_path(config_hash)
+def get_download_url(config_hash)
 	# First I have to get https://about.mattermost.com/download/
 	uri = URI.parse('https://about.mattermost.com/download/')
 	file = uri.open
 	# Next I have to get Find "Latest Release: (\d.\d.\d)\n"
-	parts = file.read.match(/Latest Release: (\d\.\d\.?\d?)/)
+	parts = file.read.match(/Latest Release: (\d+\.\d*\.?\d*)/)
 
 	# Latest Version
 	latest_version = parts[1]
@@ -69,32 +69,24 @@ def get_download_path(config_hash)
 
 	# TODO - Get the ops to put these on reasonable paths. What is this?
 	if selected_edition.include? 'team'
-		download_path = "https://releases.mattermost.com/#{latest_version}/mattermost-team-#{latest_version}-linux-amd64.tar.gz"
+		download_url = "https://releases.mattermost.com/#{latest_version}/mattermost-team-#{latest_version}-linux-amd64.tar.gz"
 	else
-		download_path = "https://releases.mattermost.com/#{latest_version}/mattermost-#{latest_version}-linux-amd64.tar.gz"
+		download_url = "https://releases.mattermost.com/#{latest_version}/mattermost-#{latest_version}-linux-amd64.tar.gz"
 	end
 
-	return {:version => latest_version, :download_path => download_path}
+	return {:version => latest_version, :download_url => download_url}
 end
 
-download_info = get_download_path(config_hash)
+download_info = get_download_url(config_hash)
 latest_mattermost_version = download_info[:version]
-download_path = download_info[:download_path]
+download_url = download_info[:download_url]
 
-puts "Download version #{latest_mattermost_version} via #{download_path}?"
-puts "Proceed? (y or N)"
-STDOUT.flush
-confirm = gets.chomp
-if !confirm.downcase.start_with? 'y'
-	abort
-end
-confirm = nil
+puts "Download version #{latest_mattermost_version} via #{download_url}?"
 
 # TODO Download the file with a progress bar
 # TODO WTF Ruby with your not verifying SSL certs?
 
 # TODO Get the user and group for the files in the directory
-
 install_user = Etc.getpwuid(File.stat(config_file).uid).name
 install_group = Etc.getgrgid(File.stat(config_file).gid).name
 
@@ -114,11 +106,60 @@ if group.empty?
 	group = install_group
 end
 
+backup_file_name = "mattermost-back-#{Time.now.strfrtime("%Y-%m-%d")}"
+backup_file_path = Dir.pwd + '/' + backup_file_name
+
+puts "Should I backup the database as well?"
+backup_db = confirm("y or N", 'y')
+
+if backup_db
+	backup_str = 'Yes'
+else
+	backup_str = 'No'
+end
+
+puts "Finally, should I backup the data directory?"
+backup_data = confirm('y or N', 'y')
+
+if backup_db
+	backup_db_str = 'Yes'
+else
+	backup_db_str = 'No'
+end
+
+puts <<-CONFIRMATION
+Thanks for that information. Here's the values you provided. Please double check them before you proceed.
+
+ - Mattermost Path #{mattermost_path}
+ - Mattermost Version: v. #{latest_mattermost_version}
+ - Download URL: #{download_url}
+ - Backup File Path: #{backup_file_path}.tgz
+ - Backup Database: #{backup_db_str}
+ - Backup Data: #{backup_data_str}
+
+To proceed with the upgrade type "Proceed" and push enter
+
+CONFIRMATION
+STDOUT.flush
+confirmation = gets.chomp
+
+
+if confirmation.downcase != 'proceed'
+	abort "Aborting upgrade"
+end
+
+
+Dir.mkdir backup_file_path
+
+if backup_db
+	
+end
+
 =begin
 # 0. Make a backup
 
 	1. Backup Everything you change
-	2. Ask if they want a database backup, too, while we're at it
+	
 	2. Explain to the user that they need to back up their databases and files because that's just smart
 =end
 
@@ -126,7 +167,7 @@ end
 # The command we're replicating is 
 # sudo mv {install-path}/mattermost {install-path}/{mattermost-back-YYYY-MM-DD}
 # TODO: Specify the backup file name
-backup_file_name = "mattermost-back-#{Time.now.strfrtime("%Y-%m-%d")}"
+
 puts "Backing up to #{backup_file_name}"
 
 =begin
