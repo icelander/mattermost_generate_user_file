@@ -1,5 +1,4 @@
 ---
 mattermost_api:
   url: http://chat.local/
-  username: professor
-  password: professor
+  auth_token: je8nuy9kx7bmjyr9n6nqnjhfgc

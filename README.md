@@ -7,7 +7,7 @@ When converting a users to SAML auth you need to generate a user file. [There ar
 0. Make sure you have Ruby installed
 1. `cd` to this directory
 2. Run `bundle` to install the required Gems
-3. `cp sample.conf.yaml conf.yaml` and update `conf.yaml` with your Mattermost settings
+3. `cp sample.conf.yaml conf.yaml` and update `conf.yaml` with your Mattermost URL and an admin [Auth Token](https://docs.mattermost.com/developer/personal-access-tokens.html)
 
 ## Run
 
