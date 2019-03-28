@@ -10,12 +10,9 @@ class MattermostApi
 	format :json
 	# debug_output $stdout
 	
-	def initialize(mattermost_url, login_id, password)
+	def initialize(mattermost_url, token)
 		@base_uri = mattermost_url + 'api/v4/'
-		@login_id = login_id
-		@password = password
-		@tmp_file = './tmp/' + Digest::MD5.hexdigest("#{login_id}")
-
+		
 		@options = {
 			headers: {
 				'Content-Type' => 'application/json',
@@ -25,26 +22,8 @@ class MattermostApi
 			verify: false
 		}
 		
-		token = nil
-		
-		begin
-			if File.file?(@tmp_file) && File.readable?(@tmp_file)
-				token = JSON.parse(File.read(@tmp_file))
-				if Time.now < Time.parse(token['expiration'])
-					token = token['value']
-				end
-			end
-		rescue Exception => e
-			pp e
-		end
-
-		if token.nil?
-			token = handle_login	
-		end
-		
 		@options[:headers]['Authorization'] = "Bearer #{token}"
 		@options[:body] = nil
-
 	end
 
 	def post_data(payload, request_url)
